@@ -1,0 +1,4 @@
+node_modules/
+.bootproof/
+*.log
+.DS_Store

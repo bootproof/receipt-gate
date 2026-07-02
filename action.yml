@@ -1,0 +1,58 @@
+name: 'Receipt Gate'
+description: 'No merge without proof it runs. Boots the app in CI, verifies an observed health signal, and emits a signed, portable receipt.'
+author: 'bootproof'
+branding:
+  icon: 'check-circle'
+  color: 'green'
+
+inputs:
+  path:
+    description: 'Path to the application within the repository'
+    required: false
+    default: '.'
+  timeout:
+    description: 'Health verification timeout in milliseconds'
+    required: false
+    default: '60000'
+  install:
+    description: 'Run the dependency install step before booting'
+    required: false
+    default: 'true'
+  bootproof-version:
+    description: 'Pinned bootproof version from npm'
+    required: false
+    default: '0.3.0'
+
+outputs:
+  booted:
+    description: 'true if an observed boot signal exists'
+    value: ${{ steps.gate.outputs.booted }}
+  health-verified:
+    description: 'true if an HTTP health signal was observed'
+    value: ${{ steps.gate.outputs.health-verified }}
+  failure-class:
+    description: 'BootProof failure classification when not booted'
+    value: ${{ steps.gate.outputs.failure-class }}
+  attestation-path:
+    description: 'Path to the signed ed25519 attestation (the receipt)'
+    value: ${{ steps.gate.outputs.attestation-path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - id: gate
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_TIMEOUT: ${{ inputs.timeout }}
+        INPUT_INSTALL: ${{ inputs.install }}
+        INPUT_BOOTPROOF_VERSION: ${{ inputs['bootproof-version'] }}
+      run: bash "${{ github.action_path }}/gate.sh"
+
+    - name: Upload signed receipt
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: boot-receipt
+        path: ${{ inputs.path }}/.bootproof/attestation.json
+        if-no-files-found: ignore

@@ -1,0 +1,36 @@
+# Example consumer workflow — drop into your repo's .github/workflows/
+# Then pin to a real tag once you've validated: uses: bootproof/receipt-gate@v1
+
+name: receipt-gate
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  prove-it-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Require proof of boot
+        id: gate
+        uses: bootproof/receipt-gate@v1
+        with:
+          path: .
+          timeout: '60000'
+          install: 'true'
+
+      - name: Surface receipt on the PR
+        if: always()
+        run: |
+          echo "booted=${{ steps.gate.outputs.booted }}" >> $GITHUB_STEP_SUMMARY
+          echo "health-verified=${{ steps.gate.outputs.health-verified }}" >> $GITHUB_STEP_SUMMARY
+          echo "failure-class=${{ steps.gate.outputs.failure-class }}" >> $GITHUB_STEP_SUMMARY
+          echo "attestation-path=${{ steps.gate.outputs.attestation-path }}" >> $GITHUB_STEP_SUMMARY
