@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# tests/npx — fake npx shim for Receipt Gate self-tests.
+# Stands in for `npx -y bootproof@<version> up ...` and emits canned
+# bootproof/result/v1 JSON based on $BOOTPROOF_FAKE_SCENARIO.
+# All arguments are ignored (gate.sh passes -y, bootproof@version, and up flags).
+set -uo pipefail
+
+case "${BOOTPROOF_FAKE_SCENARIO:-}" in
+  health-true)
+    cat <<'EOF'
+{"schema":"bootproof/result/v1","booted":true,"healthVerified":true,"failureClass":null,"attestationPath":".bootproof/attestation.json","explanation":"Verified: HTTP 200 observed. This is a fake result from the test shim."}
+EOF
+    ;;
+  health-false)
+    cat <<'EOF'
+{"schema":"bootproof/result/v1","booted":true,"healthVerified":false,"failureClass":null,"attestationPath":".bootproof/attestation.json","explanation":"Process started but no HTTP health signal observed. This is a fake result from the test shim."}
+EOF
+    ;;
+  boot-fail)
+    cat <<'EOF'
+{"schema":"bootproof/result/v1","booted":false,"healthVerified":false,"failureClass":"not_an_application","attestationPath":null,"explanation":"No package.json and no recognizable application entrypoint. This is a fake result from the test shim."}
+EOF
+    ;;
+  bad-json)
+    # Simulates bootproof crashing with non-JSON on stdout
+    echo "Error: something went horribly wrong {{{"
+    ;;
+  *)
+    echo "fake-npx: unknown scenario '$BOOTPROOF_FAKE_SCENARIO'" >&2
+    echo "valid scenarios: health-true, health-false, boot-fail, bad-json" >&2
+    exit 2
+    ;;
+esac

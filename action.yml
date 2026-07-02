@@ -1,5 +1,5 @@
 name: 'Receipt Gate'
-description: 'No merge without proof it runs. Boots the app in CI, verifies an observed health signal, and emits a signed, portable receipt.'
+description: 'No merge without proof it runs. Boots the app in CI, verifies an observed health signal (default) or a running process, and emits a signed, portable receipt.'
 author: 'bootproof'
 branding:
   icon: 'check-circle'
@@ -16,6 +16,10 @@ inputs:
     default: '60000'
   install:
     description: 'Run the dependency install step before booting'
+    required: false
+    default: 'true'
+  require-health:
+    description: 'Require an observed HTTP health signal (not just a running process). Default: true. Set to false to accept process-only boot.'
     required: false
     default: 'true'
   bootproof-version:
@@ -40,19 +44,25 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
     - id: gate
       shell: bash
       env:
         INPUT_PATH: ${{ inputs.path }}
         INPUT_TIMEOUT: ${{ inputs.timeout }}
         INPUT_INSTALL: ${{ inputs.install }}
+        INPUT_REQUIRE_HEALTH: ${{ inputs.require-health }}
         INPUT_BOOTPROOF_VERSION: ${{ inputs['bootproof-version'] }}
       run: bash "${{ github.action_path }}/gate.sh"
 
     - name: Upload signed receipt
-      if: always()
+      if: always() && steps.gate.outputs.attestation-path != ''
       uses: actions/upload-artifact@v4
       with:
         name: boot-receipt
-        path: ${{ inputs.path }}/.bootproof/attestation.json
+        path: ${{ steps.gate.outputs.attestation-path }}
         if-no-files-found: ignore

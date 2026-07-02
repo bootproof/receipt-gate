@@ -1,5 +1,5 @@
 # Example consumer workflow — drop into your repo's .github/workflows/
-# Then pin to a real tag once you've validated: uses: bootproof/receipt-gate@v1
+# For production gates, pin to a commit SHA instead of @v1 (see README).
 
 name: receipt-gate
 on:
@@ -15,17 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
+      # No setup-node needed — Receipt Gate sets up Node 20 internally.
       - name: Require proof of boot
         id: gate
         uses: bootproof/receipt-gate@v1
         with:
           path: .
           timeout: '60000'
-          install: 'true'
+          # require-health defaults to 'true' — observed HTTP health signal required.
+          # Set to 'false' only if you accept process-only boot (e.g. a worker with no HTTP).
+          # require-health: 'true'
 
       - name: Surface receipt on the PR
         if: always()
