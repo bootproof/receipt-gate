@@ -118,14 +118,15 @@ Receipt Gate is designed to produce evidence that survives an audit. The signed 
 - **Tamper-evident by construction.** Every attestation is ed25519-signed. Any byte change invalidates the signature. `npx bootproof verify` checks this independently; the Living Receipt re-verifies in a browser with zero network calls.
 - **Redaction in the evidence path.** Secrets are redacted from the attestation before it is written — not filtered after. The receipt contains no credentials, tokens, or env values that bootproof observed.
 - **Deterministic failure classification.** When the gate fails, the `failure-class` output carries bootproof's classified failure taxonomy (e.g. `not_an_application`, `health_check_timeout`, `port_conflict`). An auditor sees the same class string the engine produced.
-- **7-year artifact retention.** The action uploads the receipt as a workflow artifact with `retention-days: 2555` (~7 years), supporting audit timelines under EU AI Act Article 9, NIST AI RMF, and enterprise governance frameworks. For longer retention, download and archive externally.
+- **7-year artifact retention (GitHub maximum).** The action uploads the receipt as a workflow artifact with `retention-days: 2555` (~7 years — the maximum GitHub Actions allows). This supports audit timelines under EU AI Act Article 9, NIST AI RMF, and enterprise governance frameworks. For 10-year regulatory retention, download artifacts and archive externally (S3, archival storage) — GitHub does not support longer artifact retention.
 - **Offline verification.** `npx bootproof verify` works with no network access. An auditor does not need a bootproof account, a dashboard, or a live CI connection to validate a receipt.
-- **Trust ladder, stated on the receipt.** A receipt signed at `local_developer_signed` proves integrity-since-signing, not that the signing machine was honest. The receipt says so. The upgrade path (`local_developer_signed` → `ci_oidc_signed` → `neutral_runner_signed` → `transparency_logged`) is documented in the artifact itself.
+- **Trust ladder, stated on the receipt.** A receipt signed at `local_developer_signed` proves integrity-since-signing, not that the signing machine was honest. The receipt says so. The upgrade path (`local_developer_signed` → `ci_oidc_signed` → `neutral_runner_signed` → `transparency_logged`) is documented in the artifact itself. CI-OIDC signing is available now via bootproof's `--ci-oidc` flag; the gate defaults to `local_developer_signed` and can be upgraded by passing the flag through.
+- **SBOM export available.** BootProof's `bootproof export-sbom` command produces a CycloneDX 1.5 JSON document from `package-lock.json`. Run it in a separate workflow step alongside the gate for full supply-chain attestation.
 
 What the gate does **not** claim:
-- It does not vouch for the honesty of the CI runner — only for the integrity of the evidence since it was signed.
-- It does not produce an SBOM. Dependency provenance is a separate concern (on the bootproof roadmap).
-- It does not sign with OIDC by default. CI-OIDC signing is a higher trust level on the roadmap; today the gate signs at `local_developer_signed` inside the runner context.
+- It does not vouch for the honesty of the CI runner — only for the integrity of the evidence since it was signed. (CI-OIDC signing strengthens this by binding the receipt to the runner's identity, but does not eliminate trust in the runner.)
+- It does not produce an SBOM by default. Run `bootproof export-sbom` as a separate step if you need one.
+- It does not sign with OIDC by default. Pass `--ci-oidc` through the bootproof-version pinning to upgrade the trust level, or run bootproof directly in a workflow step with `--ci-oidc`.
 
 ## License
 
