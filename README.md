@@ -111,6 +111,22 @@ A receipt at trust level `local_developer_signed` proves the evidence has not be
 
 None beyond a standard GitHub runner. The action sets up Node 20.11+ internally (matching the `bootproof` engine requirement). The gate runs `bootproof` with `--provider local`; a CI runner is an ephemeral sandbox, which is exactly the acknowledgement that flag requires.
 
+## Compliance posture
+
+Receipt Gate is designed to produce evidence that survives an audit. The signed attestation is the primary artifact; everything below follows from it.
+
+- **Tamper-evident by construction.** Every attestation is ed25519-signed. Any byte change invalidates the signature. `npx bootproof verify` checks this independently; the Living Receipt re-verifies in a browser with zero network calls.
+- **Redaction in the evidence path.** Secrets are redacted from the attestation before it is written — not filtered after. The receipt contains no credentials, tokens, or env values that bootproof observed.
+- **Deterministic failure classification.** When the gate fails, the `failure-class` output carries bootproof's classified failure taxonomy (e.g. `not_an_application`, `health_check_timeout`, `port_conflict`). An auditor sees the same class string the engine produced.
+- **7-year artifact retention.** The action uploads the receipt as a workflow artifact with `retention-days: 2555` (~7 years), supporting audit timelines under EU AI Act Article 9, NIST AI RMF, and enterprise governance frameworks. For longer retention, download and archive externally.
+- **Offline verification.** `npx bootproof verify` works with no network access. An auditor does not need a bootproof account, a dashboard, or a live CI connection to validate a receipt.
+- **Trust ladder, stated on the receipt.** A receipt signed at `local_developer_signed` proves integrity-since-signing, not that the signing machine was honest. The receipt says so. The upgrade path (`local_developer_signed` → `ci_oidc_signed` → `neutral_runner_signed` → `transparency_logged`) is documented in the artifact itself.
+
+What the gate does **not** claim:
+- It does not vouch for the honesty of the CI runner — only for the integrity of the evidence since it was signed.
+- It does not produce an SBOM. Dependency provenance is a separate concern (on the bootproof roadmap).
+- It does not sign with OIDC by default. CI-OIDC signing is a higher trust level on the roadmap; today the gate signs at `local_developer_signed` inside the runner context.
+
 ## License
 
 Apache-2.0, same as [`bootproof`](https://github.com/bootproof/bootproof).

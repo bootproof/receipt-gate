@@ -66,3 +66,6 @@ runs:
         name: boot-receipt
         path: ${{ steps.gate.outputs.attestation-path }}
         if-no-files-found: ignore
+        # 2555 days ≈ 7 years. Supports audit timelines (EU AI Act, NIST AI RMF).
+        # Consumers who need longer retention should download and archive externally.
+        retention-days: 2555
