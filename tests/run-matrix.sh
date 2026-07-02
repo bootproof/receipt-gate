@@ -24,7 +24,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 # gate.sh writes bootproof-stderr.log in CWD; run from $WORK to avoid polluting the repo.
-cd "$WORK"
+cd "$WORK" || exit 1
 
 # A fake app dir — gate.sh passes it to npx (which the shim ignores) and uses
 # it to construct the attestation-path output. It doesn't need to actually boot.
