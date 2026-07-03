@@ -1,5 +1,5 @@
 name: 'Receipt Gate'
-description: 'No merge without proof it runs. Boots the app in CI, verifies an observed health signal (default) or a running process, and emits a signed, portable receipt.'
+description: 'No merge without proof it runs. Boots the app in CI, requires observed health, emits a signed receipt.'
 author: 'bootproof'
 branding:
   icon: 'check-circle'
