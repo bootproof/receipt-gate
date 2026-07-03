@@ -1,5 +1,5 @@
 name: 'Receipt Gate'
-description: 'No merge without proof it runs. Boots the app in CI, requires observed health, emits a signed receipt.'
+description: 'Hard gate: no merge without observed health. For advisory reporting without blocking, use the BootProof action.'
 author: 'bootproof'
 branding:
   icon: 'check-circle'
